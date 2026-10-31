@@ -1,0 +1,26 @@
+{
+  "title": "JavaScript Basics",
+  "questions": [
+    {
+      "type": "BOOLEAN",
+      "text": "JavaScript and Java are the same language.",
+      "correctAnswer": false
+    },
+    {
+      "type": "INPUT",
+      "text": "Which keyword declares a block-scoped variable that cannot be reassigned?",
+      "correctAnswer": "const"
+    },
+    {
+      "type": "CHECKBOX",
+      "text": "Which of these are primitive types in JavaScript?",
+      "options": [
+        { "text": "string", "isCorrect": true },
+        { "text": "number", "isCorrect": true },
+        { "text": "object", "isCorrect": false },
+        { "text": "boolean", "isCorrect": true },
+        { "text": "array", "isCorrect": false }
+      ]
+    }
+  ]
+}

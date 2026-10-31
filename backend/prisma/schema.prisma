@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Quiz {
+  id        String     @id @default(cuid())
+  title     String
+  createdAt DateTime   @default(now())
+  questions Question[]
+}
+
+// `type` is one of BOOLEAN | INPUT | CHECKBOX.
+// SQLite connectors in Prisma 5 do not support native enums, so it is a plain string
+// and the allowed values are enforced with Zod at the API boundary.
+model Question {
+  id             String         @id @default(cuid())
+  quizId         String
+  quiz           Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  type           String
+  text           String
+  position       Int
+  // BOOLEAN questions store the correct answer here
+  correctBoolean Boolean?
+  // INPUT questions store the expected short answer here
+  correctText    String?
+  // CHECKBOX questions store their choices here
+  options        AnswerOption[]
+
+  @@index([quizId])
+}
+
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean
+  position   Int
+
+  @@index([questionId])
+}
