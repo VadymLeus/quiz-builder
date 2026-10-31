@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { createQuizSchema } from '../schemas/quiz.schema';
+import { createQuizSchema, updateQuizSchema } from '../schemas/quiz.schema';
 import * as quizService from '../services/quiz.service';
 
 export async function createQuiz(req: Request, res: Response): Promise<void> {
@@ -15,6 +15,12 @@ export async function listQuizzes(_req: Request, res: Response): Promise<void> {
 
 export async function getQuiz(req: Request, res: Response): Promise<void> {
   const quiz = await quizService.getQuizById(req.params.id);
+  res.json(quiz);
+}
+
+export async function updateQuiz(req: Request, res: Response): Promise<void> {
+  const input = updateQuizSchema.parse(req.body);
+  const quiz = await quizService.updateQuiz(req.params.id, input);
   res.json(quiz);
 }
 

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { HttpError } from '../lib/http-error';
 import { prisma } from '../lib/prisma';
-import type { CreateQuizInput, QuestionInput } from '../schemas/quiz.schema';
+import type { CreateQuizInput, QuestionInput, UpdateQuizInput } from '../schemas/quiz.schema';
 import type { QuestionDto, QuizDetailsDto, QuizSummaryDto } from '../types/quiz';
 
 const quizDetailsInclude = {
@@ -14,7 +14,6 @@ const quizDetailsInclude = {
 type QuizWithDetails = Prisma.QuizGetPayload<{ include: typeof quizDetailsInclude }>;
 type QuestionWithOptions = QuizWithDetails['questions'][number];
 
-/** Translate a validated API question into the Prisma nested-create payload. */
 function toQuestionCreateInput(
   question: QuestionInput,
   position: number,
@@ -40,7 +39,6 @@ function toQuestionCreateInput(
   }
 }
 
-/** Translate a database row into the public API shape. */
 function toQuestionDto(question: QuestionWithOptions): QuestionDto {
   const { id, text } = question;
 
@@ -63,6 +61,10 @@ function toQuestionDto(question: QuestionWithOptions): QuestionDto {
     default:
       throw new Error(`Unknown question type "${question.type}" (question ${id})`);
   }
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
 }
 
 function toQuizDetailsDto(quiz: QuizWithDetails): QuizDetailsDto {
@@ -120,13 +122,38 @@ export async function getQuizById(id: string): Promise<QuizDetailsDto> {
   return toQuizDetailsDto(quiz);
 }
 
+export async function updateQuiz(id: string, input: UpdateQuizInput): Promise<QuizDetailsDto> {
+  try {
+    const [, quiz] = await prisma.$transaction([
+      prisma.question.deleteMany({ where: { quizId: id } }),
+      prisma.quiz.update({
+        where: { id },
+        data: {
+          title: input.title,
+          questions: {
+            create: input.questions.map((question, index) =>
+              toQuestionCreateInput(question, index),
+            ),
+          },
+        },
+        include: quizDetailsInclude,
+      }),
+    ]);
+
+    return toQuizDetailsDto(quiz);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      throw new HttpError(404, 'Quiz not found');
+    }
+    throw error;
+  }
+}
+
 export async function deleteQuiz(id: string): Promise<void> {
   try {
-    // Questions and options are removed by the ON DELETE CASCADE rules in the schema.
     await prisma.quiz.delete({ where: { id } });
   } catch (error) {
-    // P2025: "An operation failed because it depends on one or more records that were required but not found."
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+    if (isNotFoundError(error)) {
       throw new HttpError(404, 'Quiz not found');
     }
     throw error;

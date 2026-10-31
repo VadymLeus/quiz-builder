@@ -45,5 +45,8 @@ export const createQuizSchema = z.object({
     .max(50, 'At most 50 questions are allowed'),
 });
 
+export const updateQuizSchema = createQuizSchema;
+
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
+export type UpdateQuizInput = CreateQuizInput;
 export type QuestionInput = CreateQuizInput['questions'][number];

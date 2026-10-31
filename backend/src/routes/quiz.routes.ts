@@ -7,4 +7,5 @@ export const quizRouter = Router();
 quizRouter.post('/', asyncHandler(quizController.createQuiz));
 quizRouter.get('/', asyncHandler(quizController.listQuizzes));
 quizRouter.get('/:id', asyncHandler(quizController.getQuiz));
+quizRouter.put('/:id', asyncHandler(quizController.updateQuiz));
 quizRouter.delete('/:id', asyncHandler(quizController.deleteQuiz));
